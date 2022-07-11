@@ -3,7 +3,7 @@ import mediapipe as mp
 import time
 import os
 
-# num_know_faces = len(os.listdir("../checkout_images/raw")) - 3
+# num_know_faces = len(os.listdir("../checkout_images/raw"))
 num_know_faces = 0
 enlarge = 40
 
@@ -59,7 +59,7 @@ def main():
                 count = 1
                 print(f'Move to person {idx}')
 
-            # Press 'a' to save face of the person
+            # Press 's' to save face of the person
             if cv2.waitKey(1) & 0xFF == ord('s'):
                 if not os.path.exists(f"../checkout_images/raw/{idx}"):
                     os.makedirs(f"../checkout_images/raw/{idx}")
