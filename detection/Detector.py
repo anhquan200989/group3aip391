@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
 from imutils.video import FPS
+from utils import *
+import math
 
 
 class Detector:
@@ -19,7 +21,9 @@ class Detector:
         cv2.imshow('Output', self.img)
         cv2.waitKey(0)
 
-    def processFrame(self):
+    def processFrame(self, known_face_encodings, known_face_names):
+        bboxes = []
+        face_names = []
         blob = cv2.dnn.blobFromImage(self.img, 1.0, (300, 300), (104.0, 107.0, 123.0), swapRB=False, crop=False)
         self.faceModel.setInput(blob)
         predictions = self.faceModel.forward()
@@ -28,10 +32,18 @@ class Detector:
             if predictions[0, 0, i, 2] > 0.5:
                 bbox = predictions[0, 0, i, 3:7] * np.array([self.width, self.height, self.width, self.height])
                 (xmin, ymin, xmax, ymax) = bbox.astype('int')
+                bboxes.append((xmin, ymin, xmax - xmin, ymax - ymin))
+                face_bbox = [(ymin // 4, math.ceil(xmax / 4), math.ceil(ymax / 4), xmin // 4)]
+                label = get_face_label(known_face_encodings, known_face_names, face_bbox, self.img)
+                face_names.append(label)
+                # cv2.rectangle(self.img, (xmin, ymin), (xmax, ymax), (0, 0, 255), 2)
 
-                cv2.rectangle(self.img, (xmin, ymin), (xmax, ymax), (0, 0, 255), 2)
+        return face_names, bboxes
 
     def processVideo(self, videoName):
+        known_face_encodings, known_face_names = get_from_data("../checkout_images/raw/*/*.jpg")
+        process_this_frame = True
+
         cap = cv2.VideoCapture(videoName)
         if not cap.isOpened():
             print('False to open video')
@@ -43,7 +55,15 @@ class Detector:
             fps = FPS().start()
 
             while ret:
-                self.processFrame()
+                if process_this_frame:
+                    face_names, bboxes = self.processFrame(known_face_encodings, known_face_names)
+
+                process_this_frame = not process_this_frame
+                for bbox, name in zip(bboxes, face_names):
+                    cv2.putText(self.img, str(name), (bbox[0], bbox[1] - 20), cv2.FONT_HERSHEY_PLAIN,
+                                2, (255, 0, 255), 2)
+                    cv2.rectangle(self.img, bbox, (255, 0, 255), 2)
+
                 cv2.imshow('Output', self.img)
 
                 key = cv2.waitKey(1) & 0xFF
