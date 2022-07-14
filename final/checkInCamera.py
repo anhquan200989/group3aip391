@@ -9,9 +9,10 @@ y_vid_0 = 270
 # ví dụ về lịch sử mua hàng có key là id khách hàng
 customer_info = {
     '1': '10 eggs, 1 bottle of water',
-    '2': '1 bottle of milk, 5 apples',
+    '2': '1 bottle of milk, 5 apples',    
     '3': 'pork, beef',
-    '4': 'chicken, fish'
+    '4': 'chicken, fish',
+    '5': 'banh m
 }
 
 
