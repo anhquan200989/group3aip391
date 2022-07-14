@@ -1,5 +1,6 @@
 import sqlite3
 import xlrd
+import time
 # Connect to sqlite
 conn = sqlite3.connect('CustomerInfo.sqlite')
 
@@ -63,7 +64,22 @@ def add_Bill(item_id, quantity, time, Customer_id):
         cursor.execute(sql, (item_id, quantity, time, Customer_id))
     except Exception as e: print(e)
 
+def add_Bill():
+    Customer_id, item_id, quantity, time = getInput()
+    sql = "INSERT INTO BILL VALUES(?,?,?,?)"
+    try:
+        cursor.execute(sql, (item_id, quantity, time, Customer_id))
+    except Exception as e: print(e)
 
+def getInput():
+    t = time.localtime()
+    t = time.strftime('%Y-%m-%d %H:%M:%S', t)
+    Customer_id = input('Enter customer id: ')
+    item_id = input('Enter item id: ')
+    quantity = input('Enter quantity: ')
+    return Customer_id, item_id,quantity,t
+
+        
 # Add Bill dataset from outside
 def add_Bill_from_file():
     wb = xlrd.open_workbook("BillData.xls")
