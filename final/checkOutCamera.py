@@ -70,7 +70,13 @@ def main():
                 cv2.putText(img, "Scan Saved", (150, 265), cv2.FONT_HERSHEY_DUPLEX,
                             2, (0, 0, 255), 2)
                 count += 1
-
+                addAgain = input("Add another picture? ")
+                if addAgain == 'y':
+                    continue
+                else:
+                    add_Bill()  # string
+                   
+                    
         cv2.putText(img, f'FPS: {int(fps)}', (20, 70), cv2.FONT_HERSHEY_PLAIN, 3, (0, 255, 0), 2)
         cv2.imshow('Face', img)
         key = cv2.waitKey(1)
