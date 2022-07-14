@@ -51,7 +51,8 @@ def main():
         if len(bboxs) != 0:
             x, y, w, h = bboxs[0][0]
             imgRoi = img[y-enlarge:y+h+enlarge, x-enlarge:x+w+enlarge]
-            cv2.imshow('ROI', imgRoi)
+            if imgRoi.shape[0] * imgRoi.shape[1] > 0:
+                cv2.imshow('ROI', imgRoi)
 
             # Press 'a' to take picture of new person
             if cv2.waitKey(1) & 0xFF == ord('a'):
