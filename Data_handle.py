@@ -1,19 +1,14 @@
 import sqlite3
 import xlrd
 # Connect to sqlite
-conn = sqlite3.connect('D:\code\Python\AIP391\AIP391_project.db')
+conn = sqlite3.connect('CustomerInfo.sqlite')
 
 # Connect to cursor
 cursor = conn.cursor()
-
-
-def reset_database():
-    cursor.execute("drop table if exists BILL")
-    cursor.execute("drop table if exists Item")
-    cursor.execute(
-        "CREATE TABLE BILL ( ItemID INTEGER , Quantity INTEGER , Time TEXT , CustomerID INTEGER )")
-    cursor.execute(
-        "CREATE TABLE Item (ID INTEGER , Name TEXT , Price FLOAT , Brand TEXT, Product_Line TEXT, PRIMARY KEY(ID) )")
+cursor.execute("drop table if exists BILL")
+cursor.execute("drop table if exists Item")
+cursor.execute("CREATE TABLE BILL ( ItemID INTEGER , Quantity INTEGER , Time TEXT , CustomerID INTEGER )")
+cursor.execute("CREATE TABLE Item (ID INTEGER , Name TEXT , Price FLOAT , Brand TEXT, Product_Line TEXT, PRIMARY KEY(ID) )")
 
 
 # Clear table
@@ -55,6 +50,9 @@ def add_Item(name, price, brand, product_line):
     sql = "INSERT INTO Item VALUES(?,?,?,?,?)"
     id = cursor.execute("Select MAX(ID) from Item")
     try:
+        file = open("Item.txt", "a")
+        file.write(f'{name} {price} {brand} {product_line}')
+        file.close()
         cursor.execute(sql, (id+1, name, price, brand, product_line))
     except Exception as e: print(e)
 
@@ -87,21 +85,29 @@ def add_Bill_from_file():
 def viewBill():
     cursor.execute("Select * from BILL")
     catcher = cursor.fetchall()
-    for bill in catcher:
-         print("{: <10} {: <20} {: <30} {: <10}".format(*bill))
+    if len(catcher) == 0:
+        print("No order yet")
+    else:
+        for bill in catcher:
+            print("{: <10} {: <20} {: <30} {: <10}".format(*bill))
+
+def viewItem(ItemID):
+    cursor.execute("Select * from Item where ID=?", (ItemID,))
+    catcher = cursor.fetchall()
+    return catcher[0][1]
 
 # havent tested yet
 def viewOrder(CustomerID):
-    sql = cursor.execute("select * from BILL where CustomerID='" + str(CustomerID) + "'")
-    countBill = sql.fetchall()
-    if isEmpty("BILL") == False or countBill[0][0] == 0:
-        print("No order yet")
-    else:
-        cursor.execute("select * from BILL where CustomerID='" + str(CustomerID) + "' order by Time DESC")
-        catcher = cursor.fetchall()
-        print
-        for bill in catcher:
-            print("{: <10} {: <10} {: <10} {: <10} {: <10}".format(*bill))
+    cursor.execute("select * from BILL where CustomerID=? order by Time desc", (CustomerID,)) 
+    catcher = cursor.fetchall()
+    print("| {: <30} {: <10} {: <20} |".format('Item', 'Quantity', 'Time'))
+    for bill in catcher:
+        Item = viewItem(bill[0])
+        Quan = bill[1]
+        time = bill[2]
+        print("| {: <30} {: <10} {: <20} |".format(Item, Quan, time))
+        
+        
 
 
 def isEmpty(tableName):
