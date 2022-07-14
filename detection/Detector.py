@@ -1,9 +1,8 @@
-import numpy as np
-import cv2
 from imutils.video import FPS
 from utils import *
 import math
 
+enlarge = 40
 
 class Detector:
     def __init__(self, use_cuda=False):
@@ -24,6 +23,7 @@ class Detector:
     def processFrame(self, known_face_encodings, known_face_names):
         bboxes = []
         face_names = []
+        distances = []
         blob = cv2.dnn.blobFromImage(self.img, 1.0, (300, 300), (104.0, 107.0, 123.0), swapRB=False, crop=False)
         self.faceModel.setInput(blob)
         predictions = self.faceModel.forward()
@@ -32,13 +32,16 @@ class Detector:
             if predictions[0, 0, i, 2] > 0.5:
                 bbox = predictions[0, 0, i, 3:7] * np.array([self.width, self.height, self.width, self.height])
                 (xmin, ymin, xmax, ymax) = bbox.astype('int')
+                xmin, ymin, xmax, ymax = xmin-enlarge, ymin-enlarge, xmax+enlarge, ymax
                 bboxes.append((xmin, ymin, xmax - xmin, ymax - ymin))
+                # face_bbox = [(ymin, xmax, ymax, xmin)]
                 face_bbox = [(ymin // 4, math.ceil(xmax / 4), math.ceil(ymax / 4), xmin // 4)]
-                label = get_face_label(known_face_encodings, known_face_names, face_bbox, self.img)
+                label, dist = get_face_label(known_face_encodings, known_face_names, face_bbox, self.img)
                 face_names.append(label)
+                distances.append(dist)
                 # cv2.rectangle(self.img, (xmin, ymin), (xmax, ymax), (0, 0, 255), 2)
 
-        return face_names, bboxes
+        return face_names, bboxes, distances
 
     def processVideo(self, videoName):
         known_face_encodings, known_face_names = get_from_data("../checkout_images/raw/*/*.jpg")
@@ -56,11 +59,13 @@ class Detector:
 
             while ret:
                 if process_this_frame:
-                    face_names, bboxes = self.processFrame(known_face_encodings, known_face_names)
+                    face_names, bboxes, distances = self.processFrame(known_face_encodings, known_face_names)
 
                 process_this_frame = not process_this_frame
-                for bbox, name in zip(bboxes, face_names):
+                for bbox, name, dist in zip(bboxes, face_names, distances):
                     cv2.putText(self.img, str(name), (bbox[0], bbox[1] - 20), cv2.FONT_HERSHEY_PLAIN,
+                                2, (255, 0, 255), 2)
+                    cv2.putText(self.img, str(dist), (bbox[0], bbox[1]+bbox[3]+20), cv2.FONT_HERSHEY_PLAIN,
                                 2, (255, 0, 255), 2)
                     cv2.rectangle(self.img, bbox, (255, 0, 255), 2)
 
