@@ -1,17 +1,20 @@
 import sqlite3
-import xlrd
 import time
-import pandas as pd
-from openpyxl import Workbook, load_workbook
+
+from openpyxl import load_workbook
+
 # Connect to sqlite
 conn = sqlite3.connect('CustomerInfo.sqlite')
-
-# Connect to cursor
+#
+# # Connect to cursor
 cursor = conn.cursor()
-cursor.execute("drop table if exists BILL")
-cursor.execute("drop table if exists Item")
-cursor.execute("CREATE TABLE BILL ( ItemID INTEGER , Quantity INTEGER , Time TEXT , CustomerID INTEGER )")
-cursor.execute("CREATE TABLE Item (ID INTEGER , Name TEXT , Price FLOAT , Brand TEXT, Product_Line TEXT, PRIMARY KEY(ID) )")
+
+
+# cursor.execute("drop table if exists BILL")
+# cursor.execute("drop table if exists Item")
+# cursor.execute("CREATE TABLE BILL ( ItemID INTEGER , Quantity INTEGER , Time TEXT , CustomerID INTEGER )")
+# cursor.execute(
+#     "CREATE TABLE Item (ID INTEGER , Name TEXT , Price FLOAT , Brand TEXT, Product_Line TEXT, PRIMARY KEY(ID) )")
 
 
 # Clear table
@@ -27,26 +30,28 @@ def add_Item_from_file():
     for line in lines:
         num_line += 1
         data = line.rstrip().split()
-        if (len(data)==3):
+        if (len(data) == 3):
             temp = data[2]
             data.pop(2)
             data.append("null")
             data.append(temp)
-        if(num_line==len(lines)): break
+        if (num_line == len(lines)): break
         try:
             name = data[0]
             price = int(float(data[1]))
             brand = data[2]
             product_line = data[3]
             cursor.execute(sql, (num_line, name, price, brand, product_line))
-        except Exception as e: print(e)       
+        except Exception as e:
+            print(e)
     print("Add successfully")
+
 
 def viewItem():
     cursor.execute("Select * from Item")
     catcher = cursor.fetchall()
     for item in catcher:
-         print("{: <10} {: <30} {: <20} {: <20} {: <30}".format(*item))
+        print("{: <10} {: <30} {: <20} {: <20} {: <30}".format(*item))
 
 
 def add_Item(name, price, brand, product_line):
@@ -56,20 +61,25 @@ def add_Item(name, price, brand, product_line):
         file = open("Item.txt", "a")
         file.write(f'{name} {price} {brand} {product_line}')
         file.close()
-        cursor.execute(sql, (id+1, name, price, brand, product_line))
-    except Exception as e: print(e)
+        cursor.execute(sql, (id + 1, name, price, brand, product_line))
+    except Exception as e:
+        print(e)
+
 
 def add_Bill():
     wb = load_workbook("BillData.xlsx")
     ws = wb.active
+
     Customer_id, item_id, quantity, time = getInput()
     sql = "INSERT INTO BILL VALUES(?,?,?,?)"
     for i in range(len(item_id)):
         try:
-            ws.append([item_id[i], quantity[i], time, Customer_id])
             cursor.execute(sql, (item_id[i], quantity[i], time, Customer_id))
-            wb.save
-        except Exception as e: print(e)
+            ws.append([item_id[i], quantity[i], time, Customer_id])
+            wb.save("BillData.xlsx")
+        except Exception as e:
+            print(e)
+
 
 def getInput():
     t = time.localtime()
@@ -82,25 +92,27 @@ def getInput():
         item_id.append(input('Enter item id: '))
         quantity.append(input('Enter quantity: '))
         choice = input('Is there any item left in this bill?(Y/N): ')
-        if(choice in ['N','n']):
+        if (choice in ['N', 'n']):
+            print('Done')
             break
-    return Customer_id, item_id,quantity,t
+    return Customer_id, item_id, quantity, t
 
 
 # Add Bill dataset from outside
 def add_Bill_from_file():
     wb = load_workbook("BillData.xlsx")
     ws = wb.active
-    for i in range(1, ws.max_row+1):
+    for i in range(1, ws.max_row + 1):
         try:
-            ItemID = ws.cell(row = i, column = 1).value
-            Quantity = ws.cell(row = i, column = 2).value
-            Time = ws.cell(row = i, column = 3).value
-            CustomerID = ws.cell(row = i, column = 4).value
+            ItemID = ws.cell(row=i, column=1).value
+            Quantity = ws.cell(row=i, column=2).value
+            Time = ws.cell(row=i, column=3).value
+            CustomerID = ws.cell(row=i, column=4).value
             cursor.execute("INSERT INTO BILL VALUES(?,?,?,?)", (ItemID, Quantity, Time, CustomerID))
-        except Exception as e: print(e)      
-    print("Add bill Successfully")
-        
+        except Exception as e:
+            print(e)
+    print("Add bill Successfully\n")
+
 
 def viewBill():
     cursor.execute("Select * from BILL")
@@ -111,22 +123,26 @@ def viewBill():
         for bill in catcher:
             print("{: <10} {: <20} {: <30} {: <10}".format(*bill))
 
+
 def viewItem(ItemID):
     cursor.execute("Select * from Item where ID=?", (ItemID,))
     catcher = cursor.fetchall()
     return catcher[0][1]
 
+
 def viewLatestOrder(CustomerID):
-    cursor.execute("select * from BILL where CustomerID=? order by Time desc", (CustomerID,)) 
+    cursor.execute("select * from BILL where CustomerID=? order by Time desc", (CustomerID,))
     catcher = cursor.fetchall()
     time = catcher[0][2]
-    print("Latest bill in {: <20} ".format(time)) 
+    print(f"Latest bill by customer {CustomerID} in {time} ")
     for bill in catcher:
         if bill[2] == time:
             Item = viewItem(bill[0])
             Quan = bill[1]
             print(f"{Quan} {Item}")
-        
+    print('')
+
+
 def isEmpty(tableName):
     cursor = conn.execute("SELECT count(*) FROM " + str(tableName))
     icount = cursor.fetchall()
