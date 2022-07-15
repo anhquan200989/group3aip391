@@ -12,7 +12,7 @@ customer_info = {
     '2': '1 bottle of milk, 5 apples',    
     '3': 'pork, beef',
     '4': 'chicken, fish',
-    '5': 'banh m
+    '5': 'banh mi'
 }
 
 
