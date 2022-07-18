@@ -1,5 +1,8 @@
 from Data_handle import *
 from utils import *
+from collections import deque
+
+max_face_shown = 5
 
 
 class Detector:
@@ -44,7 +47,7 @@ class Detector:
 
     # -------------------------------------------------------------------------------------------------------
     def checkInVideo(self, videoName):
-        customers = []
+        customers = deque(maxlen=max_face_shown)
         known_face_encodings, known_face_names = get_from_data("./checkout_images/encode/*/*.txt")
 
         cap = cv2.VideoCapture(videoName, cv2.CAP_DSHOW)
@@ -52,7 +55,6 @@ class Detector:
         if not cap.isOpened():
             print('False to open video')
             return
-        printedBill = []
         while cap.isOpened():
             ret, self.img = cap.read()
             self.height, self.width = self.img.shape[:2]
@@ -68,10 +70,9 @@ class Detector:
                                 2, (255, 0, 255), 2)
                     cv2.rectangle(self.img, bbox, (255, 0, 255), 2)
                     # print customer's bill
-                    if name in face_names and name != 'Unknown' and name not in printedBill:
+                    if name in face_names and name != 'Unknown' and name not in customers:
                         print('ID:', name)
                         viewLatestOrder(name)
-                        printedBill.append(name)
                         customers.append(name)
 
                 cv2.imshow('Check In Camera', self.img)
@@ -117,10 +118,10 @@ class Detector:
                 face_names, bboxes = self.processFrame(known_face_encodings, known_face_names)
 
                 if len(bboxes) > 0:
-                    name = face_names[0]
+                    # name = face_names[0]
                     bbox = bboxes[0]
                     (xmin, ymin, length, height) = bbox
-                    
+
                     # Press 'a' to take picture of new person
                     if key == ord('a'):
                         num_known_faces += 1
@@ -166,7 +167,7 @@ class Detector:
                                 2, (255, 0, 255), 2)
 
                     cv2.rectangle(self.img, bbox, (255, 0, 255), 2)
-                
+
                 cv2.imshow('Check Out Camera', self.img)
 
                 if key == ord('q'):
